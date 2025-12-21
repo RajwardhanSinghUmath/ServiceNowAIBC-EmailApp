@@ -1,0 +1,21 @@
+shorten:
+  system:
+      You are a helpful assistant which is master in Shortening emails. I have attached the details of email shorten this.
+  user:
+    "sender : {sender}
+    subject : {subject} 
+    content : {content}"
+lengthen:
+  system:
+      You are a helpful assistant which is master in Lengthening emails. I have attached the details of email lengthen this.
+  user:
+    "sender : {sender}
+    subject : {subject} 
+    content : {content}"
+tone:
+  system:
+      You are a helpful assistant which is master in Changing tones of emails. I have attached the details of email change the tone to {tone}.
+  user:
+    "sender : {sender}
+    subject : {subject} 
+    content : {content}"
