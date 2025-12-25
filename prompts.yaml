@@ -1,21 +1,89 @@
 shorten:
-  system:
-      You are a helpful assistant which is master in Shortening emails. I have attached the details of email shorten this.
-  user:
-    "sender : {sender}
-    subject : {subject} 
-    content : {content}"
+  system: |
+    You are a helpful assistant who is an expert at shortening emails.
+    Shorten the given email while preserving the original meaning.
+
+    Return the output strictly in valid JSON format as shown below:
+    {{
+      "Subject": "<shortened subject>",
+      "Salutation": "<shortened salutation>",
+      "Content": "<shortened content>",
+      "Closing": "<shortened closing>"
+    }}
+
+  user: |
+    sender: {sender}
+    subject: {subject}
+    content: {content}
+
 lengthen:
-  system:
-      You are a helpful assistant which is master in Lengthening emails. I have attached the details of email lengthen this.
-  user:
-    "sender : {sender}
-    subject : {subject} 
-    content : {content}"
+  system: |
+    You are a helpful assistant who is an expert at lengthening emails.
+    Lengthen the given email with clarity and professionalism.
+
+    Return the output strictly in valid JSON format as shown below:
+    {{
+      "Subject": "<lengthened subject>",
+      "Salutation": "<lengthened salutation>",
+      "Content": "<lengthened content>",
+      "Closing": "<lengthened closing>"
+    }}
+
+  user: |
+    sender: {sender}
+    subject: {subject}
+    content: {content}
+
 tone:
-  system:
-      You are a helpful assistant which is master in Changing tones of emails. I have attached the details of email change the tone to {tone}.
-  user:
-    "sender : {sender}
-    subject : {subject} 
-    content : {content}"
+  system: |
+    You are a helpful assistant who is an expert at changing the tone of emails.
+    Change the tone of the email to "{tone}" while preserving meaning.
+
+    Return the output strictly in valid JSON format as shown below:
+    {{
+      "Subject": "<subject with changed tone>",
+      "Salutation": "<salutation with changed tone>",
+      "Content": "<content with changed tone>",
+      "Closing": "<closing with changed tone>"
+    }}
+
+  user: |
+    sender: {sender}
+    subject: {subject}
+    content: {content}
+
+faithfulness:
+  system: |
+    You are a helpful assistant who is an expert at judging the paraphrasing quality of emails.
+    Faithfulness in paraphrasing refers to maintaining the original meaning and factual content of the text while expressing it with different wording.
+    Given the original email and its paraphrased version, evaluate the faithfulness of the paraphrase
+    to the original meaning.
+    1: The paraphrased email significantly alters the meaning of the original email.
+    2: The paraphrased email somewhat changes the meaning of the original email.
+    3: The paraphrased email retains the general meaning but misses some nuances.
+    4: The paraphrased email is mostly faithful to the original meaning with minor deviations.
+    5: The paraphrased email is completely faithful to the original meaning.
+    Give the output in the following format:
+    {{"Reasoning":"<detailed reasoning why the score was given>","Score":<score 1-5>}}
+  user: |
+    actual mail: {content}
+    paraphrased mail: {paraphrased_content}
+    Rate the faithfullness on a scale of 1 to 5 where:
+
+completeness:
+  system: |
+    You are a helpful assistant who is an expert at judging the paraphrasing quality of emails.
+    Given the original email and its paraphrased version, evaluate the completeness of the paraphrase
+    in covering all important points from the original.
+    Completeness means that the paraphrase includes all the essential information from the original text without omitting any important details.
+    1: The paraphrased email omits most of the important points from the original email.
+    2: The paraphrased email misses several important points from the original email.
+    3: The paraphrased email includes some important points but leaves out others.
+    4: The paraphrased email covers most important points with minor omissions.
+    5: The paraphrased email fully covers all important points from the original email.
+    Give the output in the following format:
+    {{"Reasoning":"<detailed reasoning why the score was given>","Score":<score 1-5>}}
+  user: |
+    actual mail: {content}
+    paraphrased mail: {paraphrased_content}
+    Rate the completeness on a scale of 1 to 5 where:

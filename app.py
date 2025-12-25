@@ -9,6 +9,7 @@ from generate import GenerateEmail
 load_dotenv()
 
 generator = GenerateEmail(os.getenv('DEPLOYMENT_NAME'))
+evaluator = GenerateEmail(os.getenv('EVALUATOR_NAME'))
 
 
 st.set_page_config(page_title="AI Email Editor", page_icon="📧", layout="wide")
@@ -55,17 +56,68 @@ email_text = st.text_area(
     height=250,
     key=f"email_text_{selected_id}",
 )
+if "response_content" not in st.session_state:
+    st.session_state.response_content = ""
 
 if st.button("Elaborate"):
-    st.write(generator.generate("lengthen",selected_email))
+    response = generator.generate("lengthen", selected_email)
+    jsonresponse = json.loads(response)
+    st.write("**Lengthened Subject:** ")
+    st.write(jsonresponse["Subject"])
+    st.write("**Lengthened Salutation:** ")
+    st.write(jsonresponse["Salutation"])
+    st.write("**Lengthened Content:** ")
+    st.write(jsonresponse["Content"])
+    st.session_state.response_content = jsonresponse["Content"]
+    st.write("**Lengthened Closing:** ")
+    st.write(jsonresponse["Closing"])
+    
+    # st.write(response)
 if st.button("Shorten"):
-    st.write(generator.generate("shorten",selected_email))
+    response = generator.generate("shorten", selected_email)
+    jsonresponse = json.loads(response)
+    st.write("**Shortened Subject:** ")
+    st.write(jsonresponse["Subject"])
+    st.write("**Shortened Salutation:** ")
+    st.write(jsonresponse["Salutation"])
+    st.write("**Shortened Content:** ")
+    st.session_state.response_content = jsonresponse["Content"]
+    st.write(jsonresponse["Content"])
+    st.write("**Shortened Closing:** ")
+    st.write(jsonresponse["Closing"])
+    # st.write(response)
 
 option = st.selectbox("Change Tone", ["friendly", "sympathetic", "professional"])
 if st.button("Change Tone"):
-    st.write(generator.generate("tone",selected_email,option))
+    response = generator.generate("tone", selected_email, option)
+    jsonresponse = json.loads(response)
+    st.write("**Changed Subject:** ")
+    st.write(jsonresponse["Subject"])
+    st.write("**Changed Salutation:** ")
+    st.write(jsonresponse["Salutation"])
+    st.write("**Changed Content:** ")
+    st.write(jsonresponse["Content"])
+    st.session_state.response_content = jsonresponse["Content"]
+    st.write("**Changed Closing:** ")
+    st.write(jsonresponse["Closing"])
 
-st.write("You selected ", option)
+if st.button("Evaluate"):
+    response = evaluator.generate("faithfulness", {"content": selected_email["content"], "paraphrased_content": st.session_state.response_content})
+    st.write("**Changed Content:** ")
+    st.write(st.session_state.response_content)
+    jsonresponse = json.loads(response)
+    st.write("**Faithfullness Score:** ")
+    st.write(jsonresponse["Score"])
+    st.write("**Reasoning:** ")
+    st.write(jsonresponse["Reasoning"])
+    response = evaluator.generate("completeness", {"content": selected_email["content"], "paraphrased_content": st.session_state.response_content})
+    jsonresponse = json.loads(response)
+    st.write("**Completeness Score:** ")
+    st.write(jsonresponse["Score"])
+    st.write("**Reasoning:** ")
+    st.write(jsonresponse["Reasoning"])
+    
+    
 
 lengthen = []
 shorten = []

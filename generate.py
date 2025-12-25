@@ -58,6 +58,16 @@ class GenerateEmail():
             system_prompt = self.get_prompt('tone', prompt_type='system', **args)
             user_prompt = self.get_prompt('tone', **args)
             return self.send_prompt(user_prompt, system_prompt)
+        elif action == "faithfulness":
+            args = selected_email
+            system_prompt = self.get_prompt('faithfulness', prompt_type='system', **args)
+            user_prompt = self.get_prompt('faithfulness', **args)
+            return self.send_prompt(user_prompt, system_prompt)
+        elif action == "completeness":
+            args = selected_email
+            system_prompt = self.get_prompt('completeness', prompt_type='system', **args)
+            user_prompt = self.get_prompt('completeness', **args)
+            return self.send_prompt(user_prompt, system_prompt)
 
 generator = GenerateEmail(os.getenv('DEPLOYMENT_NAME'))
 # print(generator.generate("shorten"))
