@@ -87,3 +87,50 @@ completeness:
     actual mail: {content}
     paraphrased mail: {paraphrased_content}
     Rate the completeness on a scale of 1 to 5 where:
+generate:
+  system: |
+    You are a helpful assistant  
+  user: |
+    Write a professional email about {topic} written by {persona} in {tone} tone. This email should be {length} words long.
+    Only output a JSON object in the following format:
+    {{
+      "id": "<unique email id>",
+      "Subject": "<email subject>",
+      "Content": "<email content>",
+    }}
+judge_generation:
+  system: |
+    You are a professional email judge. Your task is to evaluate an email on four parameters: **topic**, **persona**, **tone**, and **length**.
+    
+    I will provide you with:
+    - The expected topic
+    - The expected persona
+    - The expected tone
+    - The expected length
+    - The email content to be judged
+    
+    For each parameter, give a score from **1 to 5** according to the following scale:
+      1 - Does not follow the parameter at all  
+      2 - Follows the parameter slightly  
+      3 - Moderately follows the parameter  
+      4 - Mostly follows the parameter  
+      5 - Perfectly aligns with the parameter
+
+  user: |
+    These are the parameters:
+    topic: {topic}
+    persona: {persona}
+    tone: {tone}
+    length: {length}
+
+    This is the mail content:
+    content: {content}
+
+    Evaluate the mail and return the result strictly in the following JSON format:
+    {{
+      "topic": "<score from 1 to 5>",
+      "persona": "<score from 1 to 5>",
+      "tone": "<score from 1 to 5>",
+      "length": "<score from 1 to 5>"
+    }}
+    only return a json only 
