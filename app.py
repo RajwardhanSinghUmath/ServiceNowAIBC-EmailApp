@@ -59,47 +59,81 @@ email_text = st.text_area(
 if "response_content" not in st.session_state:
     st.session_state.response_content = ""
 
-if st.button("Elaborate", use_container_width=True):
-    response = generator.generate("lengthen", selected_email)
+on_selection = st.checkbox("Partial Edit Mode (Modify specific text only)")
+selection_text = ""
+if on_selection:
+    selection_text = st.text_area("Paste the text fragment you want to modify:")
+
+def process_email_action(action, **kwargs):
+    input_data = selected_email.copy()
+    
+    input_data['content'] = email_text
+    
+    target_text = email_text
+    is_partial = False
+
+    if on_selection and selection_text.strip():
+        input_data['content'] = selection_text
+        target_text = selection_text
+        is_partial = True
+    
+    if action == "tone":
+        response = generator.generate(action, input_data, kwargs.get('tone_option'))
+    else:
+        response = generator.generate(action, input_data)
+        
     jsonresponse = json.loads(response)
+    
+    final_content = jsonresponse["Content"]
+    if is_partial:
+        if target_text in email_text:
+            final_content = email_text.replace(target_text, final_content)
+        else:
+            st.warning("Could not find the selected text in the main email body to replace. Showing raw result.")
+    
+    return jsonresponse, final_content
+
+if st.button("Elaborate", use_container_width=True):
+    jsonresponse, final_content = process_email_action("lengthen")
+    
     st.write("**Lengthened Subject:** ")
     st.write(jsonresponse["Subject"])
     st.write("**Lengthened Salutation:** ")
-    st.write(jsonresponse["Salutation"])
-    st.write("**Lengthened Content:** ")
-    st.write(jsonresponse["Content"])
-    st.session_state.response_content = jsonresponse["Content"]
+    st.write(jsonresponse.get("Salutation", ""))
+    st.write("**Lengthened Content (Merged):** ")
+    st.write(final_content)
+    st.session_state.response_content = final_content
     st.write("**Lengthened Closing:** ")
-    st.write(jsonresponse["Closing"])
+    st.write(jsonresponse.get("Closing", ""))
 
 if st.button("Shorten", use_container_width=True):
-    response = generator.generate("shorten", selected_email)
-    jsonresponse = json.loads(response)
+    jsonresponse, final_content = process_email_action("shorten")
+    
     st.write("**Shortened Subject:** ")
     st.write(jsonresponse["Subject"])
     st.write("**Shortened Salutation:** ")
-    st.write(jsonresponse["Salutation"])
-    st.write("**Shortened Content:** ")
-    st.session_state.response_content = jsonresponse["Content"]
-    st.write(jsonresponse["Content"])
+    st.write(jsonresponse.get("Salutation", ""))
+    st.write("**Shortened Content (Merged):** ")
+    st.write(final_content)
+    st.session_state.response_content = final_content
     st.write("**Shortened Closing:** ")
-    st.write(jsonresponse["Closing"])
+    st.write(jsonresponse.get("Closing", ""))
 
 st.divider()
 
 tone_option = st.selectbox("Change Tone", ["friendly", "sympathetic", "professional"])
 if st.button("Change Tone", use_container_width=True):
-    response = generator.generate("tone", selected_email, tone_option)
-    jsonresponse = json.loads(response)
-    st.write("**Changed Subject:** ")
+    jsonresponse, final_content = process_email_action("tone", tone_option=tone_option)
+    
+    st.write("**Changed Tone Subject:** ")
     st.write(jsonresponse["Subject"])
-    st.write("**Changed Salutation:** ")
-    st.write(jsonresponse["Salutation"])
-    st.write("**Changed Content:** ")
-    st.write(jsonresponse["Content"])
-    st.session_state.response_content = jsonresponse["Content"]
-    st.write("**Changed Closing:** ")
-    st.write(jsonresponse["Closing"])
+    st.write("**Changed Tone Salutation:** ")
+    st.write(jsonresponse.get("Salutation", ""))
+    st.write("**Changed Tone Content (Merged):** ")
+    st.write(final_content)
+    st.session_state.response_content = final_content
+    st.write("**Changed Tone Closing:** ")
+    st.write(jsonresponse.get("Closing", ""))
 
 st.divider()
 
