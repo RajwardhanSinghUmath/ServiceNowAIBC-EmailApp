@@ -59,7 +59,7 @@ email_text = st.text_area(
 if "response_content" not in st.session_state:
     st.session_state.response_content = ""
 
-if st.button("Elaborate"):
+if st.button("Elaborate", use_container_width=True):
     response = generator.generate("lengthen", selected_email)
     jsonresponse = json.loads(response)
     st.write("**Lengthened Subject:** ")
@@ -71,9 +71,8 @@ if st.button("Elaborate"):
     st.session_state.response_content = jsonresponse["Content"]
     st.write("**Lengthened Closing:** ")
     st.write(jsonresponse["Closing"])
-    
-    # st.write(response)
-if st.button("Shorten"):
+
+if st.button("Shorten", use_container_width=True):
     response = generator.generate("shorten", selected_email)
     jsonresponse = json.loads(response)
     st.write("**Shortened Subject:** ")
@@ -85,11 +84,12 @@ if st.button("Shorten"):
     st.write(jsonresponse["Content"])
     st.write("**Shortened Closing:** ")
     st.write(jsonresponse["Closing"])
-    # st.write(response)
 
-option = st.selectbox("Change Tone", ["friendly", "sympathetic", "professional"])
-if st.button("Change Tone"):
-    response = generator.generate("tone", selected_email, option)
+st.divider()
+
+tone_option = st.selectbox("Change Tone", ["friendly", "sympathetic", "professional"])
+if st.button("Change Tone", use_container_width=True):
+    response = generator.generate("tone", selected_email, tone_option)
     jsonresponse = json.loads(response)
     st.write("**Changed Subject:** ")
     st.write(jsonresponse["Subject"])
@@ -101,7 +101,9 @@ if st.button("Change Tone"):
     st.write("**Changed Closing:** ")
     st.write(jsonresponse["Closing"])
 
-if st.button("Evaluate"):
+st.divider()
+
+if st.button("Evaluate", use_container_width=True):
     response = evaluator.generate("faithfulness", {"content": selected_email["content"], "paraphrased_content": st.session_state.response_content})
     st.write("**Changed Content:** ")
     st.write(st.session_state.response_content)
@@ -116,30 +118,20 @@ if st.button("Evaluate"):
     st.write(jsonresponse["Score"])
     st.write("**Reasoning:** ")
     st.write(jsonresponse["Reasoning"])
-    
-    
-
 lengthen = []
-shorten = []
-tone = []
-
 with open("datasets/lengthen.jsonl", "r") as f:
     for line in f:
         line = line.strip()
         lengthen.append(json.loads(line))
 
-# st.dataframe(lengthen)
-
+shorten = []
 with open("datasets/shorten.jsonl", "r") as f:
     for line in f:
         line = line.strip()
         shorten.append(json.loads(line))
 
-# st.dataframe(shorten)
-
+tone = []
 with open("datasets/tone.jsonl", "r") as f:
     for line in f:
         line = line.strip()
         tone.append(json.loads(line))
-
-# st.dataframe(tone)

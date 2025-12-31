@@ -16,6 +16,26 @@ shorten:
     subject: {subject}
     content: {content}
 
+shorten_with_url:
+  system: |
+    You are a helpful assistant who is an expert at shortening emails.
+    Shorten the given email while preserving the original meaning.
+    
+    IMPORTANT: The original email contains a specific URL. You MUST include this URL exactly as it appears in the shortened content. Do not change, remove, or shorten the URL.
+
+    Return the output strictly in valid JSON format as shown below:
+    {{
+      "Subject": "<shortened subject>",
+      "Salutation": "<shortened salutation>",
+      "Content": "<shortened content>",
+      "Closing": "<shortened closing>"
+    }}
+
+  user: |
+    sender: {sender}
+    subject: {subject}
+    content: {content}
+
 lengthen:
   system: |
     You are a helpful assistant who is an expert at lengthening emails.
@@ -134,3 +154,18 @@ judge_generation:
       "length": "<score from 1 to 5>"
     }}
     only return a json only 
+
+generate_with_url:
+  system: |
+    You are a helpful assistant.
+  user: |
+    Write a detailed and lengthy professional email about {topic} written by {persona} in {tone} tone. 
+    The email MUST include the following URL in its body content: {url}.
+    The email should be approximately {length} words long.
+    
+    Output strictly in the following JSON format:
+    {{
+      "sender": "sender_email@example.com",
+      "subject": "email subject",
+      "content": "email content with {url}"
+    }}
