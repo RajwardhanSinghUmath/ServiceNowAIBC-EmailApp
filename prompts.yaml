@@ -107,6 +107,22 @@ completeness:
     actual mail: {content}
     paraphrased mail: {paraphrased_content}
     Rate the completeness on a scale of 1 to 5 where:
+robustness:
+  system: |
+    You are a helpful assistant who is an expert at judging the quality and robustness of emails.
+    Robustness in this context refers to the generated email's ability to maintain high quality in terms of grammar, fluency, and structural integrity, regardless of the complexity of the transformation.
+    Given the original email and its paraphrased version, evaluate the robustness of the paraphrase.
+    1: The paraphrased email is riddled with grammatical errors, awkward phrasing, or structural issues.
+    2: The paraphrased email has frequent errors or issues that affect readability.
+    3: The paraphrased email is readable but has noticeable minor errors or awkward phrasing.
+    4: The paraphrased email is mostly fluent and grammatically correct with very minor issues.
+    5: The paraphrased email is grammatically perfect, fluent, and structurally sound.
+    Give the output in the following format:
+    {{"Reasoning":"<detailed reasoning why the score was given>","Score":<score 1-5>}}
+  user: |
+    actual mail: {content}
+    paraphrased mail: {paraphrased_content}
+    Rate the robustness on a scale of 1 to 5 where:
 generate:
   system: |
     You are a helpful assistant  
@@ -169,3 +185,4 @@ generate_with_url:
       "subject": "email subject",
       "content": "email content with {url}"
     }}
+

@@ -1,9 +1,9 @@
 import json
 output={"topic": 0, "persona": 0, "tone": 0, "length": 0}
 
-num_lines = sum(1 for line in open('output_judge4.1-4o.jsonl', 'r', encoding='utf-8'))
+num_lines = sum(1 for line in open('./datasets/output_judge4.1-4o.jsonl', 'r', encoding='utf-8'))
 
-with open('output_judge4.1-4o.jsonl','r', encoding='utf-8') as f:
+with open('./datasets/output_judge4.1-4o.jsonl','r', encoding='utf-8') as f:
     for line in f:
         data_item=json.loads(line)
         output["topic"]+=int(data_item["evaluation"]["topic"])
@@ -19,8 +19,8 @@ output41=output
 
 output={"topic": 0, "persona": 0, "tone": 0, "length": 0}
 
-num_lines = sum(1 for line in open('output_judge4o-4.1.jsonl', 'r', encoding='utf-8'))
-with open('output_judge4o-4.1.jsonl','r', encoding='utf-8') as f:
+num_lines = sum(1 for line in open('./datasets/output_judge4o-4.1.jsonl', 'r', encoding='utf-8'))
+with open('./datasets/output_judge4o-4.1.jsonl','r', encoding='utf-8') as f:
     for line in f:
         data_item=json.loads(line)
         output["topic"]+=int(data_item["evaluation"]["topic"])
@@ -36,8 +36,8 @@ with open('output_judge4o-4.1.jsonl','r', encoding='utf-8') as f:
 output4o=output
 output={"topic": 0, "persona": 0, "tone": 0, "length": 0}
 
-num_lines = sum(1 for line in open('output_judge_gemma4o.jsonl', 'r', encoding='utf-8'))
-with open('output_judge_gemma4o.jsonl','r', encoding='utf-8') as f:
+num_lines = sum(1 for line in open('./datasets/output_judge_gemma4o.jsonl', 'r', encoding='utf-8'))
+with open('./datasets/output_judge_gemma4o.jsonl','r', encoding='utf-8') as f:
     for line in f:
         data_item=json.loads(line)
         output["topic"]+=int(data_item["evaluation"]["topic"])
@@ -53,8 +53,8 @@ with open('output_judge_gemma4o.jsonl','r', encoding='utf-8') as f:
 outputgemma4o=output
 output={"topic": 0, "persona": 0, "tone": 0, "length": 0}
 
-num_lines = sum(1 for line in open('output_judge_gemma4.1.jsonl', 'r', encoding='utf-8'))
-with open('output_judge_gemma4.1.jsonl','r', encoding='utf-8') as f:
+num_lines = sum(1 for line in open('./datasets/output_judge_gemma4.1.jsonl', 'r', encoding='utf-8'))
+with open('./datasets/output_judge_gemma4.1.jsonl','r', encoding='utf-8') as f:
     for line in f:
         data_item=json.loads(line)
         output["topic"]+=int(data_item["evaluation"]["topic"])
@@ -71,8 +71,8 @@ outputgemma41=output
 
 output={"topic": 0, "persona": 0, "tone": 0, "length": 0}
 
-num_lines = sum(1 for line in open('output_judge_4.1gemma.jsonl', 'r', encoding='utf-8'))
-with open('output_judge_4.1gemma.jsonl','r', encoding='utf-8') as f:
+num_lines = sum(1 for line in open('./datasets/output_judge_4.1gemma.jsonl', 'r', encoding='utf-8'))
+with open('./datasets/output_judge_4.1gemma.jsonl','r', encoding='utf-8') as f:
     for line in f:
         data_item=json.loads(line)
         output["topic"]+=int(data_item["evaluation"]["topic"])
@@ -89,8 +89,8 @@ output41gemma=output
 
 output={"topic": 0, "persona": 0, "tone": 0, "length": 0}
 
-num_lines = sum(1 for line in open('output_judge_4.1gemma.jsonl', 'r', encoding='utf-8'))
-with open('output_judge_4.1gemma.jsonl','r', encoding='utf-8') as f:
+num_lines = sum(1 for line in open('./datasets/output_judge_4.1gemma.jsonl', 'r', encoding='utf-8'))
+with open('./datasets/output_judge_4.1gemma.jsonl','r', encoding='utf-8') as f:
     for line in f:
         data_item=json.loads(line)
         output["topic"]+=int(data_item["evaluation"]["topic"])
@@ -105,11 +105,17 @@ with open('output_judge_4.1gemma.jsonl','r', encoding='utf-8') as f:
 
 output4ogemma=output
 
+print("GPT-4.1 Judged by GPT-4o-mini")
 print(output41)
+print("GPT-4o-mini Judged by GPT-4.1")
 print(output4o)
+print("GPT-4.1 Judged by Gemma")
 print(outputgemma4o)
+print("GPT-4o-mini Judged by Gemma")
 print(outputgemma41)
+print("Gemma Judged by GPT-4o-mini")
 print(output41gemma)
+print("Gemma Judged by GPT-4.1")
 print(output4ogemma)
 
 # {'topic': 5.0, 'persona': 4.86, 'tone': 4.94, 'length': 4.36}
@@ -127,29 +133,32 @@ def count_words(s):
     return len(l)
 
 ratio_generated_by_asked=0
-with open('output4o.jsonl','r', encoding='utf-8') as f:
+with open('./datasets/output4o.jsonl','r', encoding='utf-8') as f:
     for line in f:
         data_item=json.loads(line)
         generated=count_words(data_item["content"])
         asked=data_item["length"]
         ratio_generated_by_asked+=generated/asked
+print("Length checked for output by gpt-4o-mini")
 print(ratio_generated_by_asked)
 
 ratio_generated_by_asked=0
-with open('output4.1.jsonl','r', encoding='utf-8') as f:
+with open('./datasets/output4.1.jsonl','r', encoding='utf-8') as f:
     for line in f:
         data_item=json.loads(line)
         generated=count_words(data_item["content"])
         asked=data_item["length"]
         ratio_generated_by_asked+=generated/asked
+print("Length checked for output by gpt-4.1")
 print(ratio_generated_by_asked)
 ratio_generated_by_asked=0
-with open('output_gemma.jsonl','r', encoding='utf-8') as f:
+with open('./datasets/output_gemma.jsonl','r', encoding='utf-8') as f:
     for line in f:
         data_item=json.loads(line)
         generated=count_words(data_item["content"])
         asked=data_item["length"]
         ratio_generated_by_asked+=generated/asked
+print("Length checked for output by gemma-3-4b")
 print(ratio_generated_by_asked)
 
 # 99.19333333333336

@@ -1,0 +1,140 @@
+import os
+import json
+
+MODELS = ["gemma3_4b", "gpt-4.1", "gpt-4o-mini"]
+DATASETS_DIR = "datasets"
+
+FILES_TO_ANALYZE = {
+    "lengthen": ["lengthen.jsonl"],
+    "shorten": ["shorten.jsonl"],
+    "tone_friendly": ["tone_friendly.jsonl"],
+    "tone_professional": ["tone_professional.jsonl"],
+    "tone_sympathetic": ["tone_sympathetic.jsonl"],
+}
+
+def calculate_word_count(text):
+    if not isinstance(text, str):
+        return 0
+    return len(text.split())
+
+def process_judged_file(file_path):
+    stats = {
+        "faithfulness": [],
+        "completeness": [],
+        "robustness": [],
+        "compression_ratio": [],
+        "expansion_ratio": []
+    }
+    
+    if not os.path.exists(file_path):
+        return stats
+
+    with open(file_path, "r", encoding="utf-8") as f:
+        for line in f:
+            try:
+                record = json.loads(line)
+                judgement = record.get("judgement", {})
+                
+                # Metrics
+                for metric in ["faithfulness", "completeness", "robustness"]:
+                    score = judgement.get(metric, {}).get("score")
+                    if score is not None:
+                        try:
+                            stats[metric].append(float(score))
+                        except (ValueError, TypeError):
+                            pass
+
+                # Length Ratios
+                original_content = record.get("original_content", "")
+                generated_content = record.get("generated_content", "")
+                # generated_content might be JSON string or raw text depending on how it was saved
+                # In judge.py we extracted it for judging but saved the original record...
+                # Let's try to extract again or just use as is if it looks like text.
+                # Actually judge.py saves: "generated_content": response_json.get("Content", response_str)
+                # So it should be the text content.
+                
+                # Clean up if it's still a JSON string due to earlier issues
+                if generated_content.strip().startswith("```json"):
+                     # Simple cleanup if needed, but assuming judge.py output is cleaner now
+                     pass
+
+                orig_len = calculate_word_count(original_content)
+                gen_len = calculate_word_count(generated_content) # This counts words in the JSON string if not cleaned? 
+                                                                 # Ideally we want content words.
+                                                                 # But earlier scripts extracted content.
+                                                                 # Let's assume generated_content is the body.
+                
+                if isinstance(generated_content, str) and generated_content.strip().startswith("{"):
+                     try:
+                         data = json.loads(generated_content)
+                         if isinstance(data, dict):
+                             generated_content = data.get("Content", generated_content)
+                     except:
+                         pass
+
+                gen_len = calculate_word_count(generated_content)
+
+                if orig_len > 0:
+                    ratio = gen_len / orig_len
+                    stats["expansion_ratio"].append(ratio)
+                    stats["compression_ratio"].append(ratio) # Same calc, interpretation depends on task
+
+            except json.JSONDecodeError:
+                continue
+                
+    return stats
+
+def analyze_all():
+    results = {}
+    
+    for model in MODELS:
+        results[model] = {}
+        judged_dir = os.path.join(DATASETS_DIR, model, "judged")
+        
+        for task, files in FILES_TO_ANALYZE.items():
+            task_stats = {
+                "faithfulness": [],
+                "completeness": [],
+                "robustness": [],
+                "ratio": [] # expansion for lengthen, compression for shorten
+            }
+            
+            for fname in files:
+                fpath = os.path.join(judged_dir, fname)
+                file_stats = process_judged_file(fpath)
+                
+                task_stats["faithfulness"].extend(file_stats["faithfulness"])
+                task_stats["completeness"].extend(file_stats["completeness"])
+                task_stats["robustness"].extend(file_stats["robustness"])
+                
+                # Check which ratio to use
+                if task == "shorten":
+                     task_stats["ratio"].extend(file_stats["compression_ratio"])
+                elif task == "lengthen":
+                     task_stats["ratio"].extend(file_stats["expansion_ratio"])
+                else:
+                     # For tone, maybe just interesting to know length change?
+                     # Let's just track ratio generally
+                     task_stats["ratio"].extend(file_stats["expansion_ratio"])
+
+            # Calculate Averages
+            def avg(lst):
+                return sum(lst) / len(lst) if lst else 0
+
+            results[model][task] = {
+                "avg_faithfulness": avg(task_stats["faithfulness"]),
+                "avg_completeness": avg(task_stats["completeness"]),
+                "avg_robustness": avg(task_stats["robustness"]),
+                "avg_len_ratio": avg(task_stats["ratio"])
+            }
+
+    # Print Results
+    print(f"{'Model':<15} {'Task':<20} {'Faithfulness':<15} {'Completeness':<15} {'Robustness':<15} {'Len Ratio (Gen/Orig)':<20}")
+    print("-" * 100)
+    
+    for model, tasks in results.items():
+        for task, metrics in tasks.items():
+            print(f"{model:<15} {task:<20} {metrics['avg_faithfulness']:.2f}{'':<11} {metrics['avg_completeness']:.2f}{'':<11} {metrics['avg_robustness']:.2f}{'':<11} {metrics['avg_len_ratio']:.2f}")
+
+if __name__ == "__main__":
+    analyze_all()

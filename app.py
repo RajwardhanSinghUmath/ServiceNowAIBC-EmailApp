@@ -152,6 +152,13 @@ if st.button("Evaluate", use_container_width=True):
     st.write(jsonresponse["Score"])
     st.write("**Reasoning:** ")
     st.write(jsonresponse["Reasoning"])
+
+    response = evaluator.generate("robustness", {"content": selected_email["content"], "paraphrased_content": st.session_state.response_content})
+    jsonresponse = json.loads(response)
+    st.write("**Robustness Score:** ")
+    st.write(jsonresponse["Score"])
+    st.write("**Reasoning:** ")
+    st.write(jsonresponse["Reasoning"])
 lengthen = []
 with open("datasets/lengthen.jsonl", "r") as f:
     for line in f:
