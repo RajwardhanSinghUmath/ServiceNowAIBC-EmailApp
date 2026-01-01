@@ -54,10 +54,10 @@ class GenerateEmail():
             "evaluation": score_data
         }
 
-judger = GenerateEmail(os.getenv('DEPLOYMENT_NAME'))
+judger = GenerateEmail(os.getenv('EVALUATOR_NAME'))
 
-input_file = "output.jsonl"
-output_file = "output_judge1.jsonl"
+input_file = "output_gemma.jsonl"
+output_file = "output_judge_4ogemma.jsonl"
 
 num_lines = sum(1 for line in open(input_file, 'r', encoding='utf-8'))
 

@@ -11,8 +11,8 @@ with open("prompts.yaml", "r") as f:
 class GenerateEmail():    
     def __init__(self, model: str):
         self.client = OpenAI(
-            base_url=os.getenv("OPENAI_API_BASE"),
-            api_key=os.getenv("OPENAI_API_KEY"),
+            base_url=os.getenv("OLLAMA_API_BASE"),
+            api_key=os.getenv("OLLAMA_API_KEY"),
         )
         self.deployment_name = model
 
