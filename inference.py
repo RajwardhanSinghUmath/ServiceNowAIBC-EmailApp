@@ -86,9 +86,14 @@ def process_judged_file(file_path):
 
 def analyze_all():
     results = {}
+    tone_ratios = {"overall": []}
+    
+    def avg(lst):
+        return sum(lst) / len(lst) if lst else 0
     
     for model in MODELS:
         results[model] = {}
+        tone_ratios[model] = []
         judged_dir = os.path.join(DATASETS_DIR, model, "judged")
         
         for task, files in FILES_TO_ANALYZE.items():
@@ -116,10 +121,9 @@ def analyze_all():
                      # For tone, maybe just interesting to know length change?
                      # Let's just track ratio generally
                      task_stats["ratio"].extend(file_stats["expansion_ratio"])
-
-            # Calculate Averages
-            def avg(lst):
-                return sum(lst) / len(lst) if lst else 0
+                     # Collect tone ratios specifically
+                     tone_ratios[model].extend(file_stats["expansion_ratio"])
+                     tone_ratios["overall"].extend(file_stats["expansion_ratio"])
 
             results[model][task] = {
                 "avg_faithfulness": avg(task_stats["faithfulness"]),
@@ -135,6 +139,15 @@ def analyze_all():
     for model, tasks in results.items():
         for task, metrics in tasks.items():
             print(f"{model:<15} {task:<20} {metrics['avg_faithfulness']:.2f}{'':<11} {metrics['avg_completeness']:.2f}{'':<11} {metrics['avg_robustness']:.2f}{'':<11} {metrics['avg_len_ratio']:.2f}")
+
+    print("-" * 100)
+    print("Tone Change Task - Average Length Ratio")
+    print("-" * 100)
+    
+    for model in MODELS:
+        print(f"{model:<15} {'Tone Avg':<20} {avg(tone_ratios[model]):.2f}")
+    
+    print(f"{'Overall':<15} {'Tone Avg':<20} {avg(tone_ratios['overall']):.2f}")
 
 if __name__ == "__main__":
     analyze_all()

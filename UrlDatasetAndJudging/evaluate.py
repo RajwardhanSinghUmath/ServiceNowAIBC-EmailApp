@@ -1,10 +1,20 @@
 import json
 import os
+import pandas as pd # Optional, but good for tables. Use plain text formatting if pandas not guaranteed.
+# I'll stick to plain text formatting to avoid dependencies if possible, or simple tabulation.
 
-def load_data():
-    with open("random_good_urls.txt", "r") as f:
-        target_urls = [line.strip() for line in f if line.strip()]
-    
+MODELS = ["gemma3:4b", "gpt-4.1", "gpt-4o-mini"]
+DATASETS_DIR = "./datasets"
+
+def load_originals():
+    """Load the original emails and target URLs."""
+    try:
+        with open("random_good_urls.txt", "r") as f:
+            target_urls = [line.strip() for line in f if line.strip()]
+    except FileNotFoundError:
+        target_urls = []
+        print("Warning: random_good_urls.txt not found.")
+
     original_emails = {}
     if os.path.exists("url_emails.jsonl"):
         with open("url_emails.jsonl", "r", encoding="utf-8") as f:
@@ -12,176 +22,136 @@ def load_data():
                 if line.strip():
                     data = json.loads(line)
                     original_emails[data['id']] = data.get('content', '')
-    
-    shortened_emails = {}
-    if os.path.exists("shortened_url_emails.jsonl"):
-        with open("shortened_url_emails.jsonl", "r", encoding="utf-8") as f:
+    else:
+        print("Warning: url_emails.jsonl not found.")
+        
+    return target_urls, original_emails
+
+def load_generated(file_path):
+    """Load generated emails from a specific file."""
+    emails = {}
+    if os.path.exists(file_path):
+        with open(file_path, "r", encoding="utf-8") as f:
             for line in f:
                 if line.strip():
-                    data = json.loads(line)
-                    oid = data.get('original_id')
-                    if oid:
-                        shortened_emails[oid] = data.get('Content', '')
+                    try:
+                        data = json.loads(line)
+                        # Support both 'original_id' and 'id' if needed, but generate.py uses 'original_id'
+                        oid = data.get('original_id')
+                        # Content might be in 'Content', 'content', or body logic
+                        content = data.get('Content') or data.get('content') or ""
+                        
+                        if oid:
+                            emails[oid] = content
+                    except json.JSONDecodeError:
+                        pass
+    return emails
 
-    explicit_shortened_emails = {}
-    if os.path.exists("shortened_explicit_url_emails.jsonl"):
-        with open("shortened_explicit_url_emails.jsonl", "r", encoding="utf-8") as f:
-            for line in f:
-                if line.strip():
-                    data = json.loads(line)
-                    oid = data.get('original_id')
-                    if oid:
-                        explicit_shortened_emails[oid] = data.get('Content', '')
-    
-    return target_urls, original_emails, shortened_emails, explicit_shortened_emails
+def calculate_metrics(target_urls, original_emails, generated_emails):
+    """Calculate extraction and length metrics."""
+    total_gen = len(generated_emails)
+    if total_gen == 0:
+        return {
+            "success_rate": 0,
+            "retention_acc": 0,
+            "avg_len_ratio": 0
+        }
 
-def evaluate():
-    print("Loading data...")
-    urls, originals, shortens, explicit_shortens = load_data()
+    url_found_count = 0
+    valid_pairs = 0
+    retained_count = 0
+    ratios = []
+
+    # Map ID to URL (assuming order matches ID 1..N)
+    # verify logic: load_data in original script used enumerate(urls, 1) mapping to ID
+    id_to_url = {i+1: url for i, url in enumerate(target_urls)}
+
+    for eid, content in generated_emails.items():
+        if eid not in original_emails:
+            continue
+        
+        target_url = id_to_url.get(eid)
+        if not target_url:
+            continue
+
+        # Check if URL in generated
+        if target_url in content:
+            url_found_count += 1
+        
+        # Check retention (if original had it)
+        orig_content = original_emails[eid]
+        if target_url in orig_content:
+            valid_pairs += 1
+            if target_url in content:
+                retained_count += 1
+        
+        # Length ratio
+        orig_words = len(orig_content.split())
+        gen_words = len(content.split())
+        if orig_words > 0:
+            ratios.append(gen_words / orig_words)
+
+    success_rate = (url_found_count / total_gen * 100) if total_gen > 0 else 0
+    retention_acc = (retained_count / valid_pairs * 100) if valid_pairs > 0 else 0
+    avg_len_ratio = (sum(ratios) / len(ratios) * 100) if ratios else 0
+
+    return {
+        "success_rate": success_rate,
+        "retention_acc": retention_acc,
+        "avg_len_ratio": avg_len_ratio
+    }
+
+def evaluate_all():
+    print("Loading original data...")
+    urls, originals = load_originals()
     
-    total_urls = len(urls)
-    total_originals = len(originals)
-    total_shortens = len(shortens)
-    total_explicit = len(explicit_shortens)
-    
-    print(f"Loaded {total_urls} Target URLs")
-    print(f"Loaded {total_originals} Original Emails")
-    print(f"Loaded {total_shortens} Shortened Emails (Standard)")
-    print(f"Loaded {total_explicit} Shortened Emails (Explicit)")
-    
-    if total_originals == 0:
-        print("No original emails found. Exiting.")
+    if not originals:
+        print("No original emails loaded. Aborting.")
         return
 
-    url_found_in_original = 0
-    url_found_in_shortened = 0
-    url_found_in_explicit = 0
-    
-    results = []
-    
-    for i, target_url in enumerate(urls, 1):
-        email_id = i
-        
-        original_has_url = False
-        if email_id in originals:
-            if target_url in originals[email_id]:
-                original_has_url = True
-                url_found_in_original += 1
-        
-        shortened_has_url = False
-        if email_id in shortens:
-            if target_url in shortens[email_id]:
-                shortened_has_url = True
-                url_found_in_shortened += 1
+    summary_table = []
 
-        explicit_has_url = False
-        if email_id in explicit_shortens:
-            if target_url in explicit_shortens[email_id]:
-                explicit_has_url = True
-                url_found_in_explicit += 1
+    print(f"{'Model':<20} {'Task':<20} {'Success Rate':<15} {'Retention':<15} {'Len Ratio':<15}")
+    print("-" * 85)
+
+    for model in MODELS:
+        # Handle directory naming (sanitization)
+        safe_model_name = model.replace(":", "_")
+        model_dir = os.path.join(DATASETS_DIR, safe_model_name)
         
-        results.append({
-            "id": email_id,
-            "url": target_url,
-            "in_original": original_has_url,
-            "in_shortened": shortened_has_url,
-            "in_explicit": explicit_has_url
+        # Fallback to unsanitized if sanitized doesn't exist
+        if not os.path.exists(model_dir) and os.path.exists(os.path.join(DATASETS_DIR, model)):
+             model_dir = os.path.join(DATASETS_DIR, model)
+
+        # 1. Shorten (Standard)
+        shorten_path = os.path.join(model_dir, "shorten.jsonl")
+        shorten_emails = load_generated(shorten_path)
+        stats_std = calculate_metrics(urls, originals, shorten_emails)
+        
+        print(f"{model:<20} {'Shorten':<20} {stats_std['success_rate']:6.2f}%       {stats_std['retention_acc']:6.2f}%       {stats_std['avg_len_ratio']:6.2f}%")
+        
+        summary_table.append({
+            "Model": model,
+            "Task": "Shorten",
+            "Success": stats_std['success_rate'],
+            "Retention": stats_std['retention_acc'],
+            "Ratio": stats_std['avg_len_ratio']
         })
 
-    original_success_rate = (url_found_in_original / total_originals * 100) if total_originals > 0 else 0
-    shorten_success_rate = (url_found_in_shortened / total_shortens * 100) if total_shortens > 0 else 0
-    explicit_success_rate = (url_found_in_explicit / total_explicit * 100) if total_explicit > 0 else 0
-    
-    valid_pairs_std = 0
-    retained_in_std = 0
-    
-    for res in results:
-        eid = res['id']
-        if eid in originals and eid in shortens:
-            if res['in_original']:
-                valid_pairs_std += 1
-                if res['in_shortened']:
-                    retained_in_std += 1
+        # 2. Shorten with URL (Explicit)
+        explicit_path = os.path.join(model_dir, "shorten_with_url.jsonl")
+        explicit_emails = load_generated(explicit_path)
+        stats_exp = calculate_metrics(urls, originals, explicit_emails)
+        
+        print(f"{model:<20} {'Shorten+URL':<20} {stats_exp['success_rate']:6.2f}%       {stats_exp['retention_acc']:6.2f}%       {stats_exp['avg_len_ratio']:6.2f}%")
 
-    retention_accuracy_std = (retained_in_std / valid_pairs_std * 100) if valid_pairs_std > 0 else 0
-
-    valid_pairs_exp = 0
-    retained_in_exp = 0
-    
-    for res in results:
-        eid = res['id']
-        if eid in originals and eid in explicit_shortens:
-            if res['in_original']:
-                valid_pairs_exp += 1
-                if res['in_explicit']:
-                    retained_in_exp += 1
-
-    retention_accuracy_exp = (retained_in_exp / valid_pairs_exp * 100) if valid_pairs_exp > 0 else 0
-
-    
-    ratios_std = []
-    for eid, orig_content in originals.items():
-        if eid in shortens:
-            orig_words = len(orig_content.split())
-            short_words = len(shortens[eid].split())
-            if orig_words > 0:
-                ratios_std.append(short_words / orig_words)
-
-    ratios_exp = []
-    for eid, orig_content in originals.items():
-        if eid in explicit_shortens:
-            orig_words = len(orig_content.split())
-            short_words = len(explicit_shortens[eid].split())
-            if orig_words > 0:
-                ratios_exp.append(short_words / orig_words)
-
-    avg_ratio_std = (sum(ratios_std) / len(ratios_std) * 100) if ratios_std else 0
-    avg_ratio_exp = (sum(ratios_exp) / len(ratios_exp) * 100) if ratios_exp else 0
-
-    print("\n" + "="*40)
-    print("       EVALUATION REPORT       ")
-    print("="*40)
-    print(f"Original Emails Checked: {total_originals}")
-    print(f"  - contain URL: {url_found_in_original}")
-    print(f"  - Success Rate: {original_success_rate:.2f}%")
-    
-    print("-" * 40)
-    print(f"Shortened Emails (Standard) Checked: {total_shortens}")
-    print(f"  - contain URL: {url_found_in_shortened}")
-    print(f"  - Success Rate: {shorten_success_rate:.2f}%")
-    if valid_pairs_std > 0:
-        print(f"  - Retention Accuracy (where original had URL): {retention_accuracy_std:.2f}% ({retained_in_std}/{valid_pairs_std})")
-    print(f"  - Average Length Ratio: {avg_ratio_std:.2f}% of original size")
-    
-    print("-" * 40)
-    print(f"Shortened Emails (Explicit) Checked: {total_explicit}")
-    print(f"  - contain URL: {url_found_in_explicit}")
-    print(f"  - Success Rate: {explicit_success_rate:.2f}%")
-    if valid_pairs_exp > 0:
-        print(f"  - Retention Accuracy (where original had URL): {retention_accuracy_exp:.2f}% ({retained_in_exp}/{valid_pairs_exp})")
-    print(f"  - Average Length Ratio: {avg_ratio_exp:.2f}% of original size")
-    
-    print("="*40)
+        summary_table.append({
+            "Model": model,
+            "Task": "Shorten+URL",
+            "Success": stats_exp['success_rate'],
+            "Retention": stats_exp['retention_acc'],
+            "Ratio": stats_exp['avg_len_ratio']
+        })
 
 if __name__ == "__main__":
-    evaluate()
-
-# ========================================
-#        EVALUATION REPORT
-# ========================================
-# Original Emails Checked: 100
-#   - contain URL: 100
-#   - Success Rate: 100.00%
-# ----------------------------------------
-# Shortened Emails (Standard) Checked: 100
-#   - contain URL: 73
-#   - Success Rate: 73.00%
-#   - Retention Accuracy (where original had URL): 73.00% (73/100)  
-#   - Average Length Ratio: 22.54% of original size
-# ----------------------------------------
-# Shortened Emails (Explicit) Checked: 100
-#   - contain URL: 100
-#   - Success Rate: 100.00%
-#   - Retention Accuracy (where original had URL): 100.00% (100/100)
-#   - Average Length Ratio: 23.03% of original size
-# ========================================
+    evaluate_all()
