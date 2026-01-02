@@ -57,43 +57,70 @@ email_text = st.text_area(
 )
 if "response_content" not in st.session_state:
     st.session_state.response_content = ""
+
 on_selection = st.checkbox("Partial Edit Mode (Modify specific text only)")
 selection_text = ""
+partial_mode_type = "Contextual (Model merges)" 
+
 if on_selection:
+    partial_mode_type = st.radio(
+        "Partial Edit Method:",
+        ["Contextual (Model sees full mail, merges output)", "Fragment Only (Model sees only selection, manual merge)"]
+    )
     selection_text = st.text_area("Paste the text fragment you want to modify:")
+
 def process_email_action(action, **kwargs):
     input_data = selected_email.copy()
+    
     input_data['content'] = email_text
+    
     target_text = email_text
     is_partial = False
+
     if on_selection and selection_text.strip():
-        input_data['content'] = selection_text
-        target_text = selection_text
-        is_partial = True
-    if action == "tone":
-        response = generator.generate(action, input_data, tone=kwargs.get('tone_option'))
+       target_text = selection_text
+       is_partial = True
+    
+    if is_partial:
+        if "Contextual" in partial_mode_type:
+            action_key = f"{action}_contextual"
+        else:
+            action_key = f"{action}_fragment"
+            
+        input_data['selection'] = selection_text
     else:
-        response = generator.generate(action, input_data)
+        action_key = action
+
+    if action == "tone":
+        response = generator.generate(action_key, input_data, tone=kwargs.get('tone_option'))
+    else:
+        response = generator.generate(action_key, input_data)
+        
     import re
+    
     match = re.search(r"```(?:json)?\s*(.*?)\s*```", response, re.DOTALL)
     if match:
         response = match.group(1)
+        
     try:
         jsonresponse = json.loads(response)
     except json.JSONDecodeError:
         st.error(f"Failed to decode JSON from model response. Response was: {response}")
         return {}, ""
+    
     final_content = jsonresponse.get("Content", "")
-    if is_partial:
+    
+    if is_partial and "Fragment Only" in partial_mode_type:
         if target_text in email_text:
             final_content = email_text.replace(target_text, final_content)
         else:
             st.warning("Could not find the selected text in the main email body to replace. Showing raw result.")
+            
     return jsonresponse, final_content
 if st.button("Elaborate", use_container_width=True):
     jsonresponse, final_content = process_email_action("lengthen")
     st.write("**Lengthened Subject:** ")
-    st.write(jsonresponse["Subject"])
+    st.write(jsonresponse.get("Subject", "(Subject not modified)"))
     st.write("**Lengthened Salutation:** ")
     st.write(jsonresponse.get("Salutation", ""))
     st.write("**Lengthened Content (Merged):** ")
@@ -104,7 +131,7 @@ if st.button("Elaborate", use_container_width=True):
 if st.button("Shorten", use_container_width=True):
     jsonresponse, final_content = process_email_action("shorten")
     st.write("**Shortened Subject:** ")
-    st.write(jsonresponse["Subject"])
+    st.write(jsonresponse.get("Subject", "(Subject not modified)"))
     st.write("**Shortened Salutation:** ")
     st.write(jsonresponse.get("Salutation", ""))
     st.write("**Shortened Content (Merged):** ")
@@ -117,7 +144,7 @@ tone_option = st.selectbox("Change Tone", ["friendly", "sympathetic", "professio
 if st.button("Change Tone", use_container_width=True):
     jsonresponse, final_content = process_email_action("tone", tone_option=tone_option)
     st.write("**Changed Tone Subject:** ")
-    st.write(jsonresponse["Subject"])
+    st.write(jsonresponse.get("Subject", "(Subject not modified)"))
     st.write("**Changed Tone Salutation:** ")
     st.write(jsonresponse.get("Salutation", ""))
     st.write("**Changed Tone Content (Merged):** ")

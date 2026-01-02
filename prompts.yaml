@@ -72,6 +72,134 @@ tone:
     subject: {subject}
     content: {content}
 
+lengthen_contextual:
+  system: |
+    You are a helpful assistant who is an expert at editing emails.
+    You will be given the full email content and a specific selected part of that email.
+    
+    TASK:
+    1. Locate the exact "Selected Text" within the "Full Email Content".
+    2. Lengthen ONLY that specific part while preserving its meaning.
+    3. Replace the original selected part with your lengthened version in the full email.
+    4. Keep all other parts of the email exactly the same.
+    
+    OUTPUT:
+    Return the result in strict JSON format.
+    The "Content" field MUST contain the COMPLETE email body (merged result), not just the modified part.
+
+    {{
+      "Subject": "<original subject>",
+      "Salutation": "<original salutation>",
+      "Content": "<THE FULL EMAIL BODY with the modification applied>",
+      "Closing": "<original closing>"
+    }}
+
+  user: |
+    Full Email Content: {content}
+    Selected Text to Lengthen: {selection}
+    Subject: {subject}
+    Sender: {sender}
+
+shorten_contextual:
+  system: |
+    You are a helpful assistant who is an expert at editing emails.
+    You will be given the full email content and a specific selected part of that email.
+    
+    TASK:
+    1. Locate the exact "Selected Text" within the "Full Email Content".
+    2. Shorten ONLY that specific part while preserving its meaning.
+    3. Replace the original selected part with your shortened version in the full email.
+    4. Keep all other parts of the email exactly the same.
+    
+    OUTPUT:
+    Return the result in strict JSON format.
+    The "Content" field MUST contain the COMPLETE email body (merged result), not just the modified part.
+
+    {{
+      "Subject": "<original subject>",
+      "Salutation": "<original salutation>",
+      "Content": "<THE FULL EMAIL BODY with the modification applied>",
+      "Closing": "<original closing>"
+    }}
+
+  user: |
+    Full Email Content: {content}
+    Selected Text to Shorten: {selection}
+    Subject: {subject}
+    Sender: {sender}
+
+tone_contextual:
+  system: |
+    You are a helpful assistant who is an expert at editing emails.
+    You will be given the full email content and a specific selected part of that email.
+    
+    TASK:
+    1. Locate the exact "Selected Text" within the "Full Email Content".
+    2. Change the tone of ONLY that specific part to "{tone}".
+    3. Replace the original selected part with your modified version in the full email.
+    4. Keep all other parts of the email exactly the same.
+    
+    OUTPUT:
+    Return the result in strict JSON format.
+    The "Content" field MUST contain the COMPLETE email body (merged result), not just the modified part.
+
+    {{
+      "Subject": "<original subject>",
+      "Salutation": "<original salutation>",
+      "Content": "<THE FULL EMAIL BODY with the modification applied>",
+      "Closing": "<original closing>"
+    }}
+
+  user: |
+    Full Email Content: {content}
+    Selected Text to Change Tone: {selection}
+    Target Tone: {tone}
+    Subject: {subject}
+    Sender: {sender}
+
+lengthen_fragment:
+  system: |
+    You are a text editor. You will be given a fragment of text from an email.
+    Your task is to LENGTHEN this fragment significantly while maintaining its original meaning and context.
+    Do not add a subject line, salutation, or signature. return the content text only.
+
+    Return the output strictly in valid JSON format:
+    {{
+      "Content": "<lengthened fragment text>"
+    }}
+
+  user: |
+    Fragment to Lengthen: {selection}
+
+shorten_fragment:
+  system: |
+    You are a text editor. You will be given a fragment of text from an email.
+    Your task is to SHORTEN this fragment significantly while maintaining its original meaning.
+    Do not add a subject line, salutation, or signature. return the content text only.
+
+    Return the output strictly in valid JSON format:
+    {{
+      "Content": "<shortened fragment text>"
+    }}
+
+  user: |
+    Fragment to Shorten: {selection}
+
+tone_fragment:
+  system: |
+    You are a text editor. You will be given a fragment of text from an email.
+    Your task is to rewrite this fragment in a "{tone}" tone.
+    Do not add a subject line, salutation, or signature. return the content text only.
+
+    Return the output strictly in valid JSON format:
+    {{
+      "Content": "<rewritten fragment text>"
+    }}
+
+  user: |
+    Fragment to Change Tone: {selection}
+    Target Tone: {tone}
+
 faithfulness:
   system: |
     You are a helpful assistant who is an expert at judging the paraphrasing quality of emails.
