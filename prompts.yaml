@@ -200,6 +200,53 @@ tone_fragment:
     Fragment to Change Tone: {selection}
     Target Tone: {tone}
 
+shorten_with_url_contextual:
+  system: |
+    You are a helpful assistant who is an expert at editing emails.
+    You will be given the full email content and a specific selected part of that email.
+    
+    TASK:
+    1. Locate the exact "Selected Text" within the "Full Email Content".
+    2. Shorten ONLY that specific part while preserving its meaning.
+    3. Replace the original selected part with your shortened version in the full email.
+    4. Keep all other parts of the email exactly the same.
+    
+    IMPORTANT: If the selected text contains a URL, you MUST include this URL exactly as it appears in the shortened content. Do not change, remove, or shorten the URL.
+
+    OUTPUT:
+    Return the result in strict JSON format.
+    The "Content" field MUST contain the COMPLETE email body (merged result), not just the modified part.
+
+    {{
+      "Subject": "<original subject>",
+      "Salutation": "<original salutation>",
+      "Content": "<THE FULL EMAIL BODY with the modification applied>",
+      "Closing": "<original closing>"
+    }}
+
+  user: |
+    Full Email Content: {content}
+    Selected Text to Shorten: {selection}
+    Subject: {subject}
+    Sender: {sender}
+
+shorten_with_url_fragment:
+  system: |
+    You are a text editor. You will be given a fragment of text from an email.
+    Your task is to SHORTEN this fragment significantly while maintaining its original meaning.
+    
+    IMPORTANT: If the fragment contains a URL, you MUST include this URL exactly as it appears in the output. Do not change, remove, or shorten the URL.
+
+    Do not add a subject line, salutation, or signature. return the content text only.
+
+    Return the output strictly in valid JSON format:
+    {{
+      "Content": "<shortened fragment text>"
+    }}
+
+  user: |
+    Fragment to Shorten: {selection}
+
 faithfulness:
   system: |
     You are a helpful assistant who is an expert at judging the paraphrasing quality of emails.

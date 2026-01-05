@@ -136,7 +136,7 @@ if st.button("Elaborate", use_container_width=True):
     st.write(jsonresponse.get("Subject", "(Subject not modified)"))
     st.write("**Lengthened Salutation:** ")
     st.write(jsonresponse.get("Salutation", ""))
-    st.write("**Lengthened Content (Merged):** ")
+    st.write("**Lengthened Content: ** ")
     st.write(final_content)
     st.session_state.response_content = final_content
     st.write("**Lengthened Closing:** ")
@@ -147,7 +147,7 @@ if st.button("Shorten", use_container_width=True):
     st.write(jsonresponse.get("Subject", "(Subject not modified)"))
     st.write("**Shortened Salutation:** ")
     st.write(jsonresponse.get("Salutation", ""))
-    st.write("**Shortened Content (Merged):** ")
+    st.write("**Shortened Content:** ")
     st.write(final_content)
     st.session_state.response_content = final_content
     st.write("**Shortened Closing:** ")
@@ -158,7 +158,7 @@ if st.button("Shorten With URL", use_container_width=True):
     st.write(jsonresponse.get("Subject", "(Subject not modified)"))
     st.write("**Shortened Salutation:** ")
     st.write(jsonresponse.get("Salutation", ""))
-    st.write("**Shortened Content (Merged):** ")
+    st.write("**Shortened Content:** ")
     st.write(final_content)
     st.session_state.response_content = final_content
     st.write("**Shortened Closing:** ")
@@ -171,7 +171,7 @@ if st.button("Change Tone", use_container_width=True):
     st.write(jsonresponse.get("Subject", "(Subject not modified)"))
     st.write("**Changed Tone Salutation:** ")
     st.write(jsonresponse.get("Salutation", ""))
-    st.write("**Changed Tone Content (Merged):** ")
+    st.write("**Changed Tone Content: ** ")
     st.write(final_content)
     st.session_state.response_content = final_content
     st.write("**Changed Tone Closing:** ")
