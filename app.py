@@ -21,15 +21,28 @@ selected_model_key = st.sidebar.selectbox(
 )
 selected_model_name = AVAILABLE_MODELS[selected_model_key]
 generator = GenerateEmail(selected_model_name)
-evaluator = GenerateEmail(os.getenv('EVALUATOR_NAME') or selected_model_name)
+evaluator = GenerateEmail(os.getenv('OPENAI_MODEL_ONE') or selected_model_name)
 st.write(f"Using Model: **{selected_model_name}**")
 st.write("Select an email record by ID and use AI to refine it.")
-option = st.sidebar.selectbox("Select Dataset", ["lengthen", "shorten", "tone"])
+DATASET_OPTIONS = {
+    "lengthen": "datasets/lengthen.jsonl",
+    "shorten": "datasets/shorten.jsonl",
+    "tone": "datasets/tone.jsonl",
+    "url_emails": "UrlDatasetAndJudging/datasets/url_emails.jsonl"
+}
+option = st.sidebar.selectbox("Select Dataset", list(DATASET_OPTIONS.keys()))
 emails = []
-with open(f"datasets/{option}.jsonl", "r") as f:
+file_path = DATASET_OPTIONS[option]
+
+if not os.path.exists(file_path):
+    st.warning(f"File not found: {file_path}")
+    st.stop()
+
+with open(file_path, "r", encoding="utf-8") as f:
     for line in f:
         line = line.strip()
-        emails.append(json.loads(line))
+        if line:
+            emails.append(json.loads(line))
 if not emails:
     st.warning("No emails found in your JSONL file.")
     st.stop()
@@ -130,6 +143,17 @@ if st.button("Elaborate", use_container_width=True):
     st.write(jsonresponse.get("Closing", ""))
 if st.button("Shorten", use_container_width=True):
     jsonresponse, final_content = process_email_action("shorten")
+    st.write("**Shortened Subject:** ")
+    st.write(jsonresponse.get("Subject", "(Subject not modified)"))
+    st.write("**Shortened Salutation:** ")
+    st.write(jsonresponse.get("Salutation", ""))
+    st.write("**Shortened Content (Merged):** ")
+    st.write(final_content)
+    st.session_state.response_content = final_content
+    st.write("**Shortened Closing:** ")
+    st.write(jsonresponse.get("Closing", ""))
+if st.button("Shorten With URL", use_container_width=True):
+    jsonresponse, final_content = process_email_action("shorten_with_url")
     st.write("**Shortened Subject:** ")
     st.write(jsonresponse.get("Subject", "(Subject not modified)"))
     st.write("**Shortened Salutation:** ")

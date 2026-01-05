@@ -253,7 +253,7 @@ robustness:
     Rate the robustness on a scale of 1 to 5 where:
 generate:
   system: |
-    You are a helpful assistant  
+    You are a helpful assistant expert at creating mails given the topic, persona, tone and length.
   user: |
     Write a professional email about {topic} written by {persona} in {tone} tone. This email should be {length} words long.
     Only output a JSON object in the following format:

@@ -7,9 +7,9 @@ import sys
 sys.path.append('..')
 from generate import GenerateEmail
 load_dotenv()
-EVALUATOR_NAME = os.getenv("EVALUATOR_NAME")
+EVALUATOR_NAME = os.getenv("OPENAI_MODEL_ONE")
 if not EVALUATOR_NAME:
-    print("Error: EVALUATOR_NAME not set in .env")
+    print("Error: OPENAI_MODEL_ONE not set in .env")
     exit(1)
 MODELS = [
     os.getenv("OLLAMA_MODEL"),

@@ -13,7 +13,7 @@ PERSONAS = ['a marketing manager', 'a software engineer', 'a project manager']
 TONES = ['professional', 'casual', 'enthusiastic']
 LENGTHS = [50, 100, 150, 200]
 TOTAL_REQUESTS = 100
-generator = GenerateEmail(os.getenv('EVALUATOR_NAME'))
+generator = GenerateEmail(os.getenv('OPENAI_MODEL_ONE'))
 with open("output.jsonl", "a", encoding="utf-8") as f:
     for _ in range(TOTAL_REQUESTS):
         context = {
