@@ -1,3 +1,7 @@
+import os
+import json
+import matplotlib.pyplot as plt
+import numpy as np
 from dotenv import load_dotenv
 load_dotenv()
 MODELS = [
@@ -5,18 +9,19 @@ MODELS = [
     os.getenv("OPENAI_MODEL_ONE"),
     os.getenv("OPENAI_MODEL_TWO")
 ]
-DATASETS_DIR = "../datasets"
+DATASETS_DIR = "./datasets"
 def load_originals():
     """Load the original emails and target URLs."""
     try:
-        with open("random_good_urls.txt", "r") as f:
+        with open(os.path.join(DATASETS_DIR, "random_good_urls.txt"), "r") as f:
             target_urls = [line.strip() for line in f if line.strip()]
     except FileNotFoundError:
         target_urls = []
         print("Warning: random_good_urls.txt not found.")
     original_emails = {}
-    if os.path.exists("url_emails.jsonl"):
-        with open("url_emails.jsonl", "r", encoding="utf-8") as f:
+    url_emails_path = os.path.join(DATASETS_DIR, "url_emails.jsonl")
+    if os.path.exists(url_emails_path):
+        with open(url_emails_path, "r", encoding="utf-8") as f:
             for line in f:
                 if line.strip():
                     data = json.loads(line)
@@ -112,3 +117,54 @@ for model in MODELS:
         "Retention": stats_exp['retention_acc'],
         "Ratio": stats_exp['avg_len_ratio']
     })
+
+if summary_table:
+    tasks = ["Shorten", "Shorten+URL"]
+    present_models = [m for m in MODELS if any(d["Model"] == m for d in summary_table)]
+    if not present_models:
+        present_models = sorted(list(set(d["Model"] for d in summary_table)))
+    
+    unique_models = present_models
+    
+    x = np.arange(len(unique_models))
+    width = 0.35
+    
+    fig, ax = plt.subplots(figsize=(10, 6))
+    for i, task in enumerate(tasks):
+        values = []
+        for model in unique_models:
+            entry = next((item for item in summary_table if item["Model"] == model and item["Task"] == task), None)
+            values.append(entry["Retention"] if entry else 0)
+        
+        pos = x + (i - 0.5) * width
+        rects = ax.bar(pos, values, width, label=task)
+        ax.bar_label(rects, padding=3, fmt='%.1f')
+
+    ax.set_ylabel('Retention Accuracy (%)')
+    ax.set_title('URL Retention by Model and Task')
+    ax.set_xticks(x)
+    ax.set_xticklabels(unique_models)
+    ax.legend()
+    ax.grid(axis='y', linestyle='--', alpha=0.7)
+    plt.tight_layout()
+    plt.show()
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+    for i, task in enumerate(tasks):
+        values = []
+        for model in unique_models:
+            entry = next((item for item in summary_table if item["Model"] == model and item["Task"] == task), None)
+            values.append(entry["Ratio"] if entry else 0)
+        
+        pos = x + (i - 0.5) * width
+        rects = ax.bar(pos, values, width, label=task)
+        ax.bar_label(rects, padding=3, fmt='%.1f')
+
+    ax.set_ylabel('Avg Length Ratio (%)')
+    ax.set_title('Length Ratio by Model and Task')
+    ax.set_xticks(x)
+    ax.set_xticklabels(unique_models)
+    ax.legend()
+    ax.grid(axis='y', linestyle='--', alpha=0.7)
+    plt.tight_layout()
+    plt.show()

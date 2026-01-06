@@ -1,6 +1,8 @@
 import os
 import json
 import difflib
+import matplotlib.pyplot as plt
+import numpy as np
 from collections import Counter
 from dotenv import load_dotenv
 
@@ -180,6 +182,41 @@ def main():
     print_ascii_table(table_headers, final_rows, title="Avg Final Score (Higher is Better)")
     print_ascii_table(table_headers, context_rows, title="Avg Context Score (Higher is Better)")
     print_ascii_table(table_headers, selection_rows, title="Avg Selection Score (High=No Change, Low=Change)")
+
+    metrics_data = [
+        ("Avg Final Score (Higher is Better)", final_rows),
+        ("Avg Context Score (Higher is Better)", context_rows),
+        ("Avg Selection Score (High=No Change, Low=Change)", selection_rows)
+    ]
+    
+    for title, rows in metrics_data:
+        if not rows: continue
+        
+        models = sorted(list(set(r[0] for r in rows)))
+        actions = sorted(list(set(r[1] for r in rows)))
+        
+        x = np.arange(len(actions))
+        width = 0.8 / len(models) if models else 0.8
+        
+        plt.figure(figsize=(12, 6))
+        
+        for i, model in enumerate(models):
+            scores = []
+            for action in actions:
+                val_str = next((r[2] for r in rows if r[0] == model and r[1] == action), "0")
+                scores.append(float(val_str))
+            
+            pos = x + (i - (len(models) - 1) / 2) * width
+            container = plt.bar(pos, scores, width, label=model)
+            plt.bar_label(container, fmt='%.2f', padding=3, fontsize=8)
+            
+        plt.title(title)
+        plt.ylabel("Score")
+        plt.xticks(x, actions, rotation=45, ha='right')
+        plt.legend(title="Model")
+        plt.grid(axis='y', linestyle='--', alpha=0.7)
+        plt.tight_layout()
+        plt.show()
 
 if __name__ == "__main__":
     main()

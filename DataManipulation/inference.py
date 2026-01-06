@@ -1,5 +1,7 @@
 import os
 import json
+import matplotlib.pyplot as plt
+import numpy as np
 from dotenv import load_dotenv
 load_dotenv()
 MODELS = [
@@ -7,7 +9,7 @@ MODELS = [
     os.getenv("OPENAI_MODEL_ONE"),
     os.getenv("OPENAI_MODEL_TWO")
 ]
-DATASETS_DIR = "../datasets"
+DATASETS_DIR = "datasets"
 FILES_TO_ANALYZE = {
     "lengthen": ["lengthen.jsonl"],
     "shorten": ["shorten.jsonl"],
@@ -111,3 +113,36 @@ for model in MODELS:
     if model:
         print(f"{model:<15} {'Tone Avg':<20} {avg(tone_ratios[model]):.2f}")
 print(f"{'Overall':<15} {'Tone Avg':<20} {avg(tone_ratios['overall']):.2f}")
+
+tasks_labels = list(FILES_TO_ANALYZE.keys())
+x = np.arange(len(tasks_labels))
+
+valid_models = [m for m in MODELS if m and m in results and results[m]]
+num_models = len(valid_models)
+
+if num_models > 0:
+    metrics_config = [
+        ("avg_faithfulness", "Average Faithfulness"),
+        ("avg_completeness", "Average Completeness"),
+        ("avg_robustness", "Average Robustness"),
+        ("avg_len_ratio", "Average Length Ratio"),
+    ]
+    
+    bar_width = 0.2
+    
+    for metric_key, metric_title in metrics_config:
+        plt.figure(figsize=(12, 6))
+        
+        for i, model in enumerate(valid_models):
+            values = [results[model][task][metric_key] for task in tasks_labels]
+            pos = x + (i - (num_models - 1) / 2) * bar_width
+            plt.bar(pos, values, width=bar_width, label=model)
+        
+        plt.title(f"{metric_title} by Task")
+        plt.xlabel("Task")
+        plt.ylabel("Score")
+        plt.xticks(x, tasks_labels, rotation=45, ha="right")
+        plt.legend(title="Model")
+        plt.grid(axis='y', linestyle='--', alpha=0.7)
+        plt.tight_layout()
+        plt.show()
