@@ -6,7 +6,6 @@ from dotenv import load_dotenv
 from generate import GenerateEmail
 load_dotenv()
 MODELS = {
-    # "OLLAMA_MODEL": os.getenv("OLLAMA_MODEL"),
     "OPENAI_MODEL_ONE": os.getenv("OPENAI_MODEL_ONE"),
     "OPENAI_MODEL_TWO": os.getenv("OPENAI_MODEL_TWO")
 }
