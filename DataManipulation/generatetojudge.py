@@ -2,6 +2,7 @@ import os
 import json
 import re
 import sys
+from dotenv import load_dotenv
 sys.path.append('..')
 from generate import GenerateEmail
 load_dotenv()
